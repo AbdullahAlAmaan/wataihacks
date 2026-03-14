@@ -13,6 +13,7 @@ const progressRoutes = require('./routes/progress');
 const speechRoutes = require('./routes/speech');
 const photoRoutes = require('./routes/photo');
 const ttsRoutes = require('./routes/tts');
+const evaluateRoutes = require('./routes/evaluate');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -27,6 +28,7 @@ app.use('/progress', progressRoutes);
 app.use('/speech', speechRoutes);
 app.use('/photo', photoRoutes);
 app.use('/tts', ttsRoutes);
+app.use('/speech', evaluateRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true, service: 'wataihacks-api' });

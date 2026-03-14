@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { AudioPlayer } from "./AudioPlayer";
+import { DualAudioButtons } from "./DualAudioButtons";
 import { MicButton } from "./MicButton";
 import {
   SpeechCheckResponse,
   saveProgress,
   speechCheck,
+  ttsUrl,
 } from "../lib/api";
+import { findKeyWordInLine, getRohingyaWord } from "../lib/rohingya";
 
 interface SentenceItem {
   text: string;
@@ -104,21 +106,31 @@ export function SentencePractice({
         <p className="text-white font-bold text-xl leading-snug">"{current?.text}"</p>
       </div>
 
-      {/* Step 1: Listen */}
-      <div className="flex flex-col items-center space-y-2">
-        <p className="text-xs text-slate-500 uppercase tracking-widest">Step 1 — Listen</p>
-        {current?.audioUrl ? (
-          <AudioPlayer
-            src={current.audioUrl}
-            autoPlay
-            onPlay={handleAudioPlay}
-            onEnded={handleAudioEnded}
-          />
-        ) : null}
-        {!audioPlayed && (
-          <p className="text-xs text-slate-500 text-center">Press Play to hear the sentence</p>
-        )}
-      </div>
+      {/* Step 1: Listen — native Rohingya key word + full English sentence */}
+      {(() => {
+        const keyWord = current ? findKeyWordInLine(current.text) : null;
+        const rw = keyWord ? getRohingyaWord(keyWord) : null;
+        return (
+          <div className="flex flex-col items-center space-y-2">
+            <p className="text-xs text-slate-500 uppercase tracking-widest">Step 1 — Listen</p>
+            {rw && (
+              <p className="text-slate-400 text-xs text-center">
+                Key word: <span className="text-slate-200 font-bold">{rw.rohingya}</span>
+                <span className="text-slate-500 font-mono ml-2">({rw.pronunciation})</span>
+              </p>
+            )}
+            <DualAudioButtons
+              nativeSrc={rw ? ttsUrl(rw.pronunciation) : null}
+              englishSrc={current?.audioUrl ?? ttsUrl(current?.text ?? "")}
+              autoPlayNative
+              onAnyPlayed={handleAudioPlay}
+            />
+            {!audioPlayed && (
+              <p className="text-xs text-slate-500 text-center">Press a button to hear the sentence</p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Step 2: Speak */}
       {audioPlayed && (

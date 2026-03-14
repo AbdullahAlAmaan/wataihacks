@@ -9,6 +9,7 @@ import { getConversation, ConversationResponse } from "@/lib/api";
 export default function ConversationModePage() {
     const router = useRouter();
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [theme, setTheme] = useState<string>("caregiver");
     const [convoData, setConvoData] = useState<ConversationResponse | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -16,6 +17,7 @@ export default function ConversationModePage() {
         const sid = localStorage.getItem("session_id");
         const t = localStorage.getItem("theme") || "caregiver";
         setSessionId(sid);
+        setTheme(t);
         if (sid) {
             getConversation({ theme: t })
                 .then(data => setConvoData(data))
@@ -48,6 +50,7 @@ export default function ConversationModePage() {
                     <div className="w-full">
                         <ConversationMode
                             sessionId={sessionId}
+                            theme={theme}
                             turns={convoData.turns}
                             onConversationComplete={() => router.push("/lesson/photo")}
                         />

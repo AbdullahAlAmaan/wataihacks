@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AudioPlayer } from "./AudioPlayer";
+import { DualAudioButtons } from "./DualAudioButtons";
 import { MicButton } from "./MicButton";
 import {
   SpeechCheckResponse,
@@ -11,6 +11,7 @@ import {
   speechCheck,
   ttsUrl,
 } from "../lib/api";
+import { getRohingyaWord } from "../lib/rohingya";
 
 interface WordLessonProps {
   sessionId: string;
@@ -26,9 +27,8 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
   const [feedback, setFeedback] = useState<FeedbackState>("idle");
   const [transcript, setTranscript] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [imgError, setImgError] = useState(false);
-  // true once audio has played at least once — unlocks the mic
   const [audioPlayed, setAudioPlayed] = useState(false);
+  const [advancing, setAdvancing] = useState(false);
 
   useEffect(() => {
     void loadWord();
@@ -40,27 +40,16 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
     setError(null);
     setFeedback("idle");
     setTranscript(null);
-    setImgError(false);
     setAudioPlayed(false);
+    setAdvancing(false);
     try {
       const data = await getNextWord({ theme, session_id: sessionId });
       setWordData(data);
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Could not load word. Please try again.",
-      );
+      setError(e instanceof Error ? e.message : "Could not load word. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAudioPlay = () => {
-    // Unlock mic as soon as audio starts playing
-    setAudioPlayed(true);
-  };
-
-  const handleAudioEnded = () => {
-    setAudioPlayed(true);
   };
 
   const handleRecorded = async (payload: { audioBase64: string; mimeType: string }) => {
@@ -80,21 +69,22 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
       setFeedback(isCorrect ? "correct" : "incorrect");
       setTranscript(result.transcript ?? null);
 
-      try {
-        await saveProgress({
-          session_id: sessionId,
-          word: wordData.word,
-          sentence: wordData.word,
-          correct: isCorrect,
-          stage: 1,
-        });
-      } catch {
-        // Non-fatal
+      // Mark word as fully completed so next load gives a DIFFERENT word
+      await saveProgress({
+        session_id: sessionId,
+        word: wordData.word,
+        sentence: wordData.word,
+        correct: isCorrect,
+        stage: isCorrect ? 3 : 1, // stage=3 marks it complete in backend
+      }).catch(() => {});
+
+      if (isCorrect) {
+        // Auto-advance to next word after a short pause
+        setAdvancing(true);
+        setTimeout(() => void loadWord(), 1800);
       }
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Could not check speech. Please try again.",
-      );
+      setError(e instanceof Error ? e.message : "Could not check speech. Please try again.");
     } finally {
       setChecking(false);
     }
@@ -103,59 +93,64 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
   return (
     <div className="flex flex-col items-center space-y-6">
       {loading ? (
-        <div className="text-lg font-semibold text-slate-300">Loading word…</div>
+        <div className="text-lg font-semibold text-slate-300">
+          {advancing ? "Loading next word…" : "Loading word…"}
+        </div>
       ) : error ? (
         <div className="flex flex-col items-center space-y-3">
           <div className="text-sm text-red-400 max-w-xs text-center">{error}</div>
           <button
             type="button"
             onClick={() => void loadWord()}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm"
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
           >
             Retry
           </button>
         </div>
       ) : wordData ? (
         <>
-          {/* Word image */}
-          <div className="flex flex-col items-center space-y-3">
-            {wordData.image && !imgError ? (
-              <img
-                src={wordData.image}
-                alt={wordData.word}
-                className="h-40 w-40 rounded-2xl object-cover shadow-md"
-                onError={() => setImgError(true)}
-              />
-            ) : (
-              <div className="flex h-40 w-40 items-center justify-center rounded-2xl bg-gray-900 border border-white/10 text-6xl shadow-inner">
-                🗣️
-              </div>
-            )}
+          {/* Word display */}
+          <div className="flex flex-col items-center space-y-3 w-full">
+            <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-slate-800 border border-white/10 text-5xl shadow-inner">
+              🗣️
+            </div>
 
-            {/* Word display */}
-            <div className="rounded-full bg-slate-900 border border-white/5 px-8 py-3 text-2xl font-bold text-white tracking-wide shadow-xl">
+            {/* English word */}
+            <div className="rounded-full bg-slate-900 border border-white/5 px-10 py-3 text-3xl font-bold text-white tracking-wide shadow-xl">
               {wordData.word}
             </div>
+
           </div>
 
-          {/* Step 1: Listen */}
-          <div className="flex flex-col items-center space-y-2 w-full">
-            <p className="text-xs text-slate-500 uppercase tracking-widest">Step 1 — Listen</p>
-            <AudioPlayer
-              src={ttsUrl(wordData.word)}
-              autoPlay
-              onPlay={handleAudioPlay}
-              onEnded={handleAudioEnded}
-            />
-            {!audioPlayed && (
-              <p className="text-xs text-slate-500 text-center mt-1">
-                Press Play to hear the word
-              </p>
-            )}
-          </div>
+          {/* Step 1: Listen — native Rohingya + English */}
+          {(() => {
+            const rw = getRohingyaWord(wordData.word);
+            return (
+              <div className="flex flex-col items-center space-y-2 w-full">
+                <p className="text-xs text-slate-500 uppercase tracking-widest">Step 1 — Listen</p>
+                {rw && (
+                  <div className="text-center">
+                    <p className="text-slate-400 text-xs">
+                      Rohingya: <span className="text-slate-200 font-bold">{rw.rohingya}</span>
+                      <span className="text-slate-500 font-mono ml-2">({rw.pronunciation})</span>
+                    </p>
+                  </div>
+                )}
+                <DualAudioButtons
+                  nativeSrc={rw ? ttsUrl(rw.pronunciation) : null}
+                  englishSrc={ttsUrl(wordData.word)}
+                  autoPlayNative
+                  onAnyPlayed={() => setAudioPlayed(true)}
+                />
+                {!audioPlayed && (
+                  <p className="text-xs text-slate-500 text-center">Press a button to hear the word</p>
+                )}
+              </div>
+            );
+          })()}
 
-          {/* Step 2: Speak — only shown after audio has played */}
-          {audioPlayed && (
+          {/* Step 2: Speak — unlocked after audio plays */}
+          {audioPlayed && !advancing && (
             <div className="flex flex-col items-center space-y-2 w-full">
               <p className="text-xs text-slate-500 uppercase tracking-widest">Step 2 — Speak</p>
               <MicButton
@@ -176,7 +171,7 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
                     : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                 }`}
               >
-                {feedback === "correct" ? "✅ Correct!" : "❌ Try again"}
+                {feedback === "correct" ? "✅ Correct! Next word…" : "❌ Try again"}
               </div>
               {transcript && (
                 <p className="text-xs text-slate-400 text-center">
@@ -186,14 +181,16 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
             </div>
           )}
 
-          {/* Next word button */}
-          <button
-            type="button"
-            onClick={() => void loadWord()}
-            className="mt-2 rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-          >
-            Next word →
-          </button>
+          {/* Manual skip — shown when incorrect so user isn't stuck */}
+          {feedback === "incorrect" && (
+            <button
+              type="button"
+              onClick={() => void loadWord()}
+              className="text-xs text-slate-500 underline hover:text-slate-300"
+            >
+              Skip to next word
+            </button>
+          )}
         </>
       ) : null}
     </div>

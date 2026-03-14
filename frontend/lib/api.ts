@@ -154,6 +154,29 @@ export async function getProgress(
   return handleResponse<ProgressResponse>(res);
 }
 
+export interface EvaluateRequest {
+  worker_line: string;
+  user_transcript: string;
+  theme: string;
+}
+
+export interface EvaluateResponse {
+  appropriate: boolean;
+  feedback: string;
+  suggestions: string[];
+}
+
+export async function evaluateResponse(
+  payload: EvaluateRequest,
+): Promise<EvaluateResponse> {
+  const res = await fetch(`${API_BASE_URL}/speech/evaluate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse<EvaluateResponse>(res);
+}
+
 export async function analyzePhoto(
   payload: PhotoAnalyzeRequest,
 ): Promise<PhotoAnalyzeResponse> {
