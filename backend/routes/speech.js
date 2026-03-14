@@ -1,52 +1,75 @@
 /**
- * Speech check route: validate transcript against expected text (fuzzy match).
- * Frontend sends expected + transcript (from ElevenLabs STT or mock).
+ * Speech Check Route
+ * Member 4 — AI Integration Specialist
+ *
+ * POST /speech/check
+ * Receives a recorded audio buffer from the frontend,
+ * transcribes it using ElevenLabs STT, and checks if it
+ * matches the expected sentence using fuzzy matching.
+ *
+ * Multer is used to handle multipart/form-data audio uploads.
  */
 
-const { Router } = require('express');
+const express = require('express');
+const multer = require('multer');
+const stringSimilarity = require('string-similarity');
+const { transcribeAudio } = require('../services/stt');
 
-const router = Router();
+const router = express.Router();
+// Store audio in memory (buffer), not disk
+const upload = multer({ storage: multer.memoryStorage() });
 
-const SIMILARITY_THRESHOLD = 0.75;
-
-function normalize(s) {
-  return (s || '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .replace(/[^\w\s]/g, '')
-    .trim();
-}
-
-function similarity(a, b) {
-  const na = normalize(a);
-  const nb = normalize(b);
-  if (na === nb) return 1;
-  if (!na || !nb) return 0;
-  const wordsA = na.split(' ');
-  const wordsB = nb.split(' ');
-  let matches = 0;
-  for (const w of wordsA) {
-    if (wordsB.includes(w)) matches++;
-  }
-  const maxWords = Math.max(wordsA.length, wordsB.length, 1);
-  return matches / maxWords;
+/**
+ * Normalises a string for comparison:
+ * lowercase, strip punctuation, trim whitespace.
+ */
+function normalise(str) {
+    return str.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
 }
 
 /**
  * POST /speech/check
- * Body: { expected: string, transcript: string }
- * Returns: { correct: boolean, similarity: number }
+ *
+ * Multipart form fields:
+ *   - audio   {File}   The recorded audio blob (webm/wav/mp3)
+ *   - expected {string} The sentence the user was supposed to say
+ *
+ * Response:
+ * {
+ *   "transcript": "i give medicine",
+ *   "correct": true,
+ *   "similarity": 0.92
+ * }
  */
-router.post('/check', (req, res) => {
-  try {
-    const { expected, transcript } = req.body || {};
-    const score = similarity(expected || '', transcript || '');
-    const correct = score >= SIMILARITY_THRESHOLD;
-    res.json({ correct, similarity: Math.round(score * 100) / 100 });
-  } catch (err) {
-    console.error('POST /speech/check', err);
-    res.status(500).json({ error: 'Failed to check speech' });
-  }
+router.post('/check', upload.single('audio'), async (req, res) => {
+    try {
+        const expected = req.body.expected;
+
+        if (!expected) {
+            return res.status(400).json({ error: 'Missing required field: expected' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Missing audio file' });
+        }
+
+        // 1. Transcribe the uploaded audio with ElevenLabs STT
+        const transcript = await transcribeAudio(req.file.buffer, req.file.originalname || 'audio.webm');
+
+        // 2. Fuzzy-match the transcript against what was expected
+        //    Score >= 0.75 counts as correct (forgiving for non-native speakers)
+        const similarity = stringSimilarity.compareTwoStrings(
+            normalise(transcript),
+            normalise(expected)
+        );
+
+        const correct = similarity >= 0.75;
+
+        return res.json({ transcript, correct, similarity: parseFloat(similarity.toFixed(2)) });
+    } catch (err) {
+        console.error('[speech/check] Error:', err.message);
+        return res.status(500).json({ error: 'Speech check failed', details: err.message });
+    }
 });
 
 module.exports = router;
