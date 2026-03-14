@@ -1,0 +1,15 @@
+# ── Secret files ────────────────────────────────────────────────
+backend/.env
+
+# ── Local-only test scripts & their output ───────────────────────
+backend/test_apis.js
+backend/test_output_tts.mp3
+backend/sample.jpg
+
+# ── Node dependencies ────────────────────────────────────────────
+backend/node_modules/
+node_modules/
+
+# ── OS & editor files ────────────────────────────────────────────
+.DS_Store
+.vscode/
