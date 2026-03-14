@@ -6,6 +6,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const lessonRoutes = require('./routes/lesson');
 const progressRoutes = require('./routes/progress');
@@ -18,6 +19,8 @@ const PORT = process.env.PORT || 8000;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // base64 audio/image can be several MB
+// Serve sample.jpg (and any other files in the backend root) as static assets
+app.use('/static', express.static(path.join(__dirname)));
 
 app.use('/lesson', lessonRoutes);
 app.use('/progress', progressRoutes);

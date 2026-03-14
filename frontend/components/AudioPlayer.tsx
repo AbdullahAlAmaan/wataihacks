@@ -19,62 +19,90 @@ export function AudioPlayer({
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [playError, setPlayError] = useState<string | null>(null);
 
+  // Store callbacks in refs so the autoPlay effect doesn't re-fire when they change
+  const onEndedRef = useRef(onEnded);
+  const onPlayRef = useRef(onPlay);
+  useEffect(() => { onEndedRef.current = onEnded; }, [onEnded]);
+  useEffect(() => { onPlayRef.current = onPlay; }, [onPlay]);
+
+  // When src changes: reload the audio element and attempt autoplay
   useEffect(() => {
-    if (!audioRef.current) return;
-    if (autoPlay && src) {
-      audioRef.current
-        .play()
+    const el = audioRef.current;
+    if (!el) return;
+
+    setIsPlaying(false);
+    setPlayError(null);
+    el.load(); // force browser to re-fetch the new src
+
+    if (!autoPlay || !src) return;
+
+    // Small delay so the browser has a moment to begin loading
+    const timer = setTimeout(() => {
+      el.play()
         .then(() => {
           setIsPlaying(true);
-          onPlay?.();
+          onPlayRef.current?.();
         })
         .catch(() => {
-          // Autoplay might be blocked; user can tap manually.
+          // Autoplay blocked — user must tap Play manually (common browser policy)
+          setIsPlaying(false);
         });
-    } else {
-      setIsPlaying(false);
-    }
-  }, [autoPlay, src, onPlay]);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src, autoPlay]);
 
   const handlePlayClick = async () => {
-    if (!audioRef.current || !src) return;
+    const el = audioRef.current;
+    if (!el || !src) return;
+    setPlayError(null);
     try {
-      await audioRef.current.play();
+      await el.play();
       setIsPlaying(true);
-      onPlay?.();
-    } catch {
-      // Ignore play errors; usually user gesture issues.
+      onPlayRef.current?.();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not play audio";
+      setPlayError(msg);
     }
   };
 
   const handleEnded = () => {
     setIsPlaying(false);
-    onEnded?.();
+    onEndedRef.current?.();
   };
 
   const isDisabled = !src;
 
   return (
-    <div className={`flex flex-col items-center ${className}`}>
-      <audio ref={audioRef} src={src ?? undefined} onEnded={handleEnded} />
+    <div className={`flex flex-col items-center space-y-1 ${className}`}>
+      {/* key=src forces the <audio> element to remount when src changes */}
+      <audio key={src ?? "__empty__"} ref={audioRef} src={src ?? undefined} onEnded={handleEnded} />
+
       <button
         type="button"
         onClick={handlePlayClick}
         disabled={isDisabled}
-        className={`rounded-full px-8 py-4 text-lg font-semibold shadow-md focus:outline-none focus:ring-4 focus:ring-offset-2
+        className={`rounded-full px-8 py-4 text-lg font-semibold shadow-md transition-all focus:outline-none
           ${
             isDisabled
-              ? "bg-gray-400 text-gray-800 cursor-not-allowed"
+              ? "bg-slate-700 text-slate-500 cursor-not-allowed"
               : isPlaying
               ? "bg-emerald-500 text-white animate-pulse"
-              : "bg-blue-600 text-white"
+              : "bg-blue-600 text-white hover:bg-blue-500 active:scale-95"
           }`}
         aria-label="Play audio"
       >
-        {isDisabled ? "No audio" : isPlaying ? "Playing..." : "Play"}
+        {isPlaying ? "▶ Playing..." : "▶ Play"}
       </button>
+
+      {playError && (
+        <p className="text-xs text-red-400 text-center max-w-xs">
+          Audio error — is the backend running?
+        </p>
+      )}
     </div>
   );
 }
-

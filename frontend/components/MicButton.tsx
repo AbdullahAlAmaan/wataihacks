@@ -11,17 +11,23 @@ interface MicButtonProps {
   onRecorded: (data: { audioBase64: string; mimeType: string }) => void;
   disabled?: boolean;
   className?: string;
+  /** Show this label above the button to prompt the user. */
+  nudge?: string;
 }
 
 type MicState = "idle" | "recording" | "processing";
 
-export function MicButton({ onRecorded, disabled, className = "" }: MicButtonProps) {
+// Hard cap on recording length so it never runs forever
+const MAX_RECORDING_MS = 10_000;
+
+export function MicButton({ onRecorded, disabled, className = "", nudge }: MicButtonProps) {
   const [state, setState] = useState<MicState>("idle");
   const [error, setError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const silenceDetectorRef = useRef<{ stop: () => void } | null>(null);
+  const maxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -53,11 +59,11 @@ export function MicButton({ onRecorded, disabled, className = "" }: MicButtonPro
         chunksRef.current = [];
         silenceDetectorRef.current?.stop();
         silenceDetectorRef.current = null;
-        stopStream();
-
-        if (state === "idle") {
-          return;
+        if (maxTimerRef.current) {
+          clearTimeout(maxTimerRef.current);
+          maxTimerRef.current = null;
         }
+        stopStream();
 
         setState("processing");
         try {
@@ -72,6 +78,12 @@ export function MicButton({ onRecorded, disabled, className = "" }: MicButtonPro
 
       mediaRecorder.start();
 
+      // Auto-stop after MAX_RECORDING_MS regardless
+      maxTimerRef.current = setTimeout(() => {
+        stopRecordingInternal();
+      }, MAX_RECORDING_MS);
+
+      // Silence detection with grace period so user has time to start speaking
       const detector = createSilenceDetector(stream, () => {
         stopRecordingInternal();
       });
@@ -97,6 +109,10 @@ export function MicButton({ onRecorded, disabled, className = "" }: MicButtonPro
 
   const stopRecordingInternal = (triggerOnStop = true) => {
     const recorder = mediaRecorderRef.current;
+    if (maxTimerRef.current) {
+      clearTimeout(maxTimerRef.current);
+      maxTimerRef.current = null;
+    }
     if (!recorder) return;
     if (recorder.state !== "inactive") {
       if (!triggerOnStop) {
@@ -121,30 +137,43 @@ export function MicButton({ onRecorded, disabled, className = "" }: MicButtonPro
 
   const isDisabled = disabled || state === "processing";
 
-  const label =
-    state === "idle" ? "Tap to Speak" : state === "recording" ? "Listening..." : "Processing...";
-
   return (
-    <div className={`flex flex-col items-center space-y-2 ${className}`}>
+    <div className={`flex flex-col items-center space-y-3 ${className}`}>
+      {/* Nudge prompt shown above the mic button */}
+      {nudge && state === "idle" ? (
+        <p className="text-sm font-semibold text-emerald-400 animate-pulse text-center">
+          {nudge}
+        </p>
+      ) : null}
+
       <button
         type="button"
         onClick={handleClick}
         disabled={isDisabled}
-        className={`relative flex h-24 w-24 items-center justify-center rounded-full text-white shadow-lg focus:outline-none focus:ring-4 focus:ring-offset-2
+        className={`relative flex h-24 w-24 items-center justify-center rounded-full text-white shadow-lg focus:outline-none focus:ring-4 focus:ring-offset-2 transition-all
           ${
             isDisabled
-              ? "bg-gray-400 cursor-not-allowed"
+              ? "bg-gray-600 cursor-not-allowed opacity-60"
               : state === "recording"
-              ? "bg-red-600 animate-pulse"
-              : "bg-emerald-600"
+              ? "bg-red-600 animate-pulse scale-110"
+              : "bg-emerald-600 hover:bg-emerald-500 active:scale-95"
           }`}
         aria-label="Record your voice"
       >
-        <span className="text-3xl">🎤</span>
+        <span className="text-3xl">{state === "recording" ? "🔴" : "🎤"}</span>
       </button>
-      <span className="text-sm font-medium text-gray-800">{label}</span>
-      {error ? <span className="text-xs text-red-600 max-w-xs text-center">{error}</span> : null}
+
+      <span className="text-sm font-medium text-slate-300">
+        {state === "idle"
+          ? "Tap to Speak"
+          : state === "recording"
+          ? "Listening... (tap to stop)"
+          : "Checking..."}
+      </span>
+
+      {error ? (
+        <span className="text-xs text-red-400 max-w-xs text-center">{error}</span>
+      ) : null}
     </div>
   );
 }
-

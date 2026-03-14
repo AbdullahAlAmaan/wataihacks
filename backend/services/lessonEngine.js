@@ -144,11 +144,12 @@ function getConversation(theme, variant) {
  * @returns {object}
  */
 function getWordPayload(theme, word) {
+  const apiBase = process.env.API_BASE_URL || 'http://localhost:4000';
   return {
     word,
     theme,
-    image: `/images/${word}.png`,
-    audio_url: `/audio/${word}.mp3`,
+    // Use sample.jpg served from the backend as a placeholder for all words
+    image: `${apiBase}/static/sample.jpg`,
     sentence_examples: getSentenceExamples(word)
   };
 }

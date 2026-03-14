@@ -160,7 +160,7 @@ export function PhotoCapture({ sessionId }: PhotoCaptureProps) {
       ) : null}
 
       {step === "analyzing" ? (
-        <div className="text-lg font-semibold text-gray-800">
+        <div className="text-lg font-semibold text-slate-300">
           Thinking about your photo…
         </div>
       ) : null}
@@ -174,9 +174,9 @@ export function PhotoCapture({ sessionId }: PhotoCaptureProps) {
           ) : null}
 
           {word ? (
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-slate-400">
               Practice word:{" "}
-              <span className="font-semibold text-gray-900">{word}</span>
+              <span className="font-semibold text-white">{word}</span>
             </div>
           ) : null}
 

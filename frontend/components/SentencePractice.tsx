@@ -32,16 +32,19 @@ export function SentencePractice({
   const [index, setIndex] = useState(0);
   const [checking, setChecking] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>("idle");
+  const [transcript, setTranscript] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [audioPlayed, setAudioPlayed] = useState(false);
 
   const current = sentences[index];
 
-  const handleCheckResult = async (
-    res: SpeechCheckResponse,
-    sentence: string,
-  ) => {
+  const handleAudioPlay = () => setAudioPlayed(true);
+  const handleAudioEnded = () => setAudioPlayed(true);
+
+  const handleCheckResult = async (res: SpeechCheckResponse, sentence: string) => {
     const isCorrect = res.correct || res.similarity >= 0.75;
     setFeedback(isCorrect ? "correct" : "incorrect");
+    setTranscript(res.transcript ?? null);
 
     try {
       await saveProgress({
@@ -60,22 +63,22 @@ export function SentencePractice({
         setTimeout(() => {
           setIndex((i) => i + 1);
           setFeedback("idle");
+          setTranscript(null);
           setError(null);
-        }, 700);
+          setAudioPlayed(false);
+        }, 1000);
       } else {
-        onCompleteAll?.();
+        setTimeout(() => onCompleteAll?.(), 1000);
       }
     }
   };
 
-  const handleRecorded = async (payload: {
-    audioBase64: string;
-    mimeType: string;
-  }) => {
+  const handleRecorded = async (payload: { audioBase64: string; mimeType: string }) => {
     if (!current) return;
     setChecking(true);
     setError(null);
     setFeedback("idle");
+    setTranscript(null);
 
     try {
       const result = await speechCheck({
@@ -86,63 +89,76 @@ export function SentencePractice({
       await handleCheckResult(result, current.text);
     } catch (e) {
       setError(
-        e instanceof Error
-          ? e.message
-          : "Could not check speech. Please try again.",
+        e instanceof Error ? e.message : "Could not check speech. Please try again.",
       );
     } finally {
       setChecking(false);
     }
   };
 
-  const feedbackText =
-    feedback === "correct"
-      ? "Correct!"
-      : feedback === "incorrect"
-      ? "Try again"
-      : "";
-
-  const feedbackColor =
-    feedback === "correct"
-      ? "bg-emerald-100 text-emerald-900"
-      : feedback === "incorrect"
-      ? "bg-amber-100 text-amber-900"
-      : "";
-
   return (
-    <div className="flex flex-col items-center space-y-6">
-      <div className="rounded-full bg-gray-900 px-6 py-2 text-lg font-bold text-white tracking-wide">
-        {current?.text}
+    <div className="flex flex-col items-center space-y-6 w-full">
+      {/* Sentence display */}
+      <div className="rounded-2xl bg-slate-800/60 border border-white/10 px-6 py-4 text-center w-full">
+        <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Repeat this sentence</p>
+        <p className="text-white font-bold text-xl leading-snug">"{current?.text}"</p>
       </div>
 
-      {current?.audioUrl ? (
-        <AudioPlayer src={current.audioUrl} autoPlay className="mt-2" />
-      ) : null}
+      {/* Step 1: Listen */}
+      <div className="flex flex-col items-center space-y-2">
+        <p className="text-xs text-slate-500 uppercase tracking-widest">Step 1 — Listen</p>
+        {current?.audioUrl ? (
+          <AudioPlayer
+            src={current.audioUrl}
+            autoPlay
+            onPlay={handleAudioPlay}
+            onEnded={handleAudioEnded}
+          />
+        ) : null}
+        {!audioPlayed && (
+          <p className="text-xs text-slate-500 text-center">Press Play to hear the sentence</p>
+        )}
+      </div>
 
-      <MicButton
-        onRecorded={handleRecorded}
-        disabled={checking}
-        className="mt-4"
-      />
-
-      {feedback !== "idle" ? (
-        <div
-          className={`mt-4 rounded-full px-6 py-2 text-base font-semibold ${feedbackColor}`}
-        >
-          {feedbackText}
+      {/* Step 2: Speak */}
+      {audioPlayed && (
+        <div className="flex flex-col items-center space-y-2">
+          <p className="text-xs text-slate-500 uppercase tracking-widest">Step 2 — Speak</p>
+          <MicButton
+            onRecorded={handleRecorded}
+            disabled={checking}
+            nudge={feedback === "idle" ? "👆 Now say the sentence!" : undefined}
+          />
         </div>
-      ) : null}
+      )}
 
-      {error ? (
-        <div className="text-xs text-red-700 max-w-xs text-center mt-2">
-          {error}
+      {/* Feedback */}
+      {feedback !== "idle" && (
+        <div className="flex flex-col items-center space-y-2">
+          <div
+            className={`rounded-full px-6 py-2 text-base font-semibold ${
+              feedback === "correct"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+            }`}
+          >
+            {feedback === "correct" ? "✅ Correct!" : "❌ Try again"}
+          </div>
+          {transcript && (
+            <p className="text-xs text-slate-400 text-center">
+              I heard: <span className="text-slate-200 font-medium">"{transcript}"</span>
+            </p>
+          )}
         </div>
-      ) : null}
+      )}
 
-      <div className="mt-4 text-xs text-gray-600">
-        {index + 1} / {sentences.length}
+      {error && (
+        <div className="text-xs text-red-400 max-w-xs text-center">{error}</div>
+      )}
+
+      <div className="text-xs text-slate-500">
+        Sentence {index + 1} of {sentences.length}
       </div>
     </div>
   );
 }
-

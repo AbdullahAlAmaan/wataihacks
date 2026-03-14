@@ -15,6 +15,7 @@ export function blobToBase64(blob: Blob): Promise<string> {
       const result = reader.result;
       if (typeof result === 'string') {
         // result is a data URL: "data:audio/webm;base64,XXXX"
+        // Return just the raw base64 part
         const base64 = result.split(',')[1] ?? '';
         resolve(base64);
       } else {
@@ -33,6 +34,11 @@ export interface SilenceDetectorOptions {
   threshold?: number;
   /** How often (ms) to sample the audio stream. */
   sampleIntervalMs?: number;
+  /**
+   * Grace period (ms) after recording starts before silence detection kicks in.
+   * Prevents immediately stopping if user hasn't started speaking yet.
+   */
+  gracePeriodMs?: number;
 }
 
 export interface SilenceDetector {
@@ -44,17 +50,18 @@ export function createSilenceDetector(
   onSilence: () => void,
   options: SilenceDetectorOptions = {},
 ): SilenceDetector {
-  const silenceDurationMs = options.silenceDurationMs ?? 1500;
+  const silenceDurationMs = options.silenceDurationMs ?? 2500;
   const threshold = options.threshold ?? 0.05;
   const sampleIntervalMs = options.sampleIntervalMs ?? 100;
+  // Don't start detecting silence until user has had time to start speaking
+  const gracePeriodMs = options.gracePeriodMs ?? 2000;
 
   const AudioContextCtor =
     typeof window !== 'undefined' &&
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ((window as any).AudioContext || (window as any).webkitAudioContext);
   if (!AudioContextCtor) {
-    // Fallback: if AudioContext is unavailable, do nothing and rely on manual stop.
-    return { stop: () => { } };
+    return { stop: () => {} };
   }
 
   const audioContext = new AudioContextCtor();
@@ -66,9 +73,16 @@ export function createSilenceDetector(
   const dataArray = new Uint8Array(analyser.fftSize);
   let lastLoudTime = Date.now();
   let stopped = false;
+  let graceOver = false;
+
+  // Don't start evaluating silence until grace period passes
+  const graceTimer = window.setTimeout(() => {
+    graceOver = true;
+    lastLoudTime = Date.now(); // reset clock so grace period doesn't count as silence
+  }, gracePeriodMs);
 
   const intervalId = window.setInterval(() => {
-    if (stopped) return;
+    if (stopped || !graceOver) return;
 
     analyser.getByteTimeDomainData(dataArray);
     let sum = 0;
@@ -90,10 +104,10 @@ export function createSilenceDetector(
     stop: () => {
       if (stopped) return;
       stopped = true;
+      window.clearTimeout(graceTimer);
       window.clearInterval(intervalId);
       source.disconnect();
-      audioContext.close().catch(() => { });
+      audioContext.close().catch(() => {});
     },
   };
 }
-
