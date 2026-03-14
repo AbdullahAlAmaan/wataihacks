@@ -31,7 +31,7 @@ router.post('/identify', async (req, res) => {
     if (!apiKey || apiKey.trim() === '') {
       return res.status(503).json({
         error: 'Photo identification unavailable',
-        code: 'GEMINI_API_KEY_NOT_SET'
+        code: 'GEMINI_API_KEY_NOT_SET',
       });
     }
 
@@ -42,7 +42,19 @@ router.post('/identify', async (req, res) => {
     return res.json(result);
   } catch (err) {
     console.error('POST /photo/identify', err);
-    res.status(500).json({ error: err.message || 'Failed to identify image' });
+
+    // Handle Gemini quota errors explicitly so the frontend can show a friendly message
+    const status = err.status || err.code || err.statusCode;
+    const message = err.message || '';
+
+    if (status === 429 || message.includes('RESOURCE_EXHAUSTED') || message.includes('quota')) {
+      return res.status(503).json({
+        error: 'Photo feature temporarily unavailable due to Gemini API quota limits. Please try again later or use the word/sentence lessons.',
+        code: 'GEMINI_QUOTA_EXCEEDED',
+      });
+    }
+
+    return res.status(500).json({ error: err.message || 'Failed to identify image' });
   }
 });
 
