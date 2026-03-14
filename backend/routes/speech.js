@@ -1,23 +1,17 @@
 /**
  * Speech Check Route
- * Member 4 — AI Integration Specialist
  *
  * POST /speech/check
- * Receives a recorded audio buffer from the frontend,
+ * Receives audio as base64 JSON from the frontend,
  * transcribes it using ElevenLabs STT, and checks if it
  * matches the expected sentence using fuzzy matching.
- *
- * Multer is used to handle multipart/form-data audio uploads.
  */
 
 const express = require('express');
-const multer = require('multer');
 const stringSimilarity = require('string-similarity');
 const { transcribeAudio } = require('../services/stt');
 
 const router = express.Router();
-// Store audio in memory (buffer), not disk
-const upload = multer({ storage: multer.memoryStorage() });
 
 /**
  * Normalises a string for comparison:
@@ -30,9 +24,10 @@ function normalise(str) {
 /**
  * POST /speech/check
  *
- * Multipart form fields:
- *   - audio   {File}   The recorded audio blob (webm/wav/mp3)
- *   - expected {string} The sentence the user was supposed to say
+ * JSON body:
+ *   - audio_base64 {string}  Base64-encoded audio (may include data URL prefix)
+ *   - expected     {string}  The sentence the user was supposed to say
+ *   - session_id   {string}  (optional) session identifier
  *
  * Response:
  * {
@@ -41,23 +36,26 @@ function normalise(str) {
  *   "similarity": 0.92
  * }
  */
-router.post('/check', upload.single('audio'), async (req, res) => {
+router.post('/check', async (req, res) => {
     try {
-        const expected = req.body.expected;
+        const { expected, audio_base64 } = req.body;
 
         if (!expected) {
             return res.status(400).json({ error: 'Missing required field: expected' });
         }
 
-        if (!req.file) {
-            return res.status(400).json({ error: 'Missing audio file' });
+        if (!audio_base64) {
+            return res.status(400).json({ error: 'Missing required field: audio_base64' });
         }
 
-        // 1. Transcribe the uploaded audio with ElevenLabs STT
-        const transcript = await transcribeAudio(req.file.buffer, req.file.originalname || 'audio.webm');
+        // Strip data URL prefix if present (e.g. "data:audio/webm;base64,...")
+        const base64Data = audio_base64.replace(/^data:[^;]+;base64,/, '');
+        const audioBuffer = Buffer.from(base64Data, 'base64');
 
-        // 2. Fuzzy-match the transcript against what was expected
-        //    Score >= 0.75 counts as correct (forgiving for non-native speakers)
+        // Transcribe the audio with ElevenLabs STT
+        const transcript = await transcribeAudio(audioBuffer, 'audio.webm');
+
+        // Fuzzy-match: score >= 0.75 counts as correct (forgiving for non-native speakers)
         const similarity = stringSimilarity.compareTwoStrings(
             normalise(transcript),
             normalise(expected)

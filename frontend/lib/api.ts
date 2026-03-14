@@ -1,6 +1,15 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+/**
+ * Returns a URL that streams TTS audio for the given text via the backend.
+ * Use this as the `src` for AudioPlayer.
+ * Example: ttsUrl("bread") → "http://localhost:4000/tts/bread"
+ */
+export function ttsUrl(text: string): string {
+  return `${API_BASE_URL}/tts/${encodeURIComponent(text)}`;
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -27,7 +36,7 @@ export interface LessonStartResponse {
 export interface WordLessonResponse {
   word: string;
   image?: string;
-  audio_url: string;
+  audio_url?: string;
   sentence_examples?: string[];
 }
 
@@ -51,6 +60,7 @@ export interface SpeechCheckRequest {
 export interface SpeechCheckResponse {
   correct: boolean;
   similarity: number;
+  transcript?: string;
 }
 
 export interface ProgressSaveRequest {
@@ -76,10 +86,10 @@ export interface PhotoAnalyzeRequest {
 
 export interface PhotoAnalyzeResponse {
   label: string;
-  // e.g. word the learner should practice, like "aspirin"
   word?: string;
   audio_url?: string;
   quiz_prompt?: string;
+  sentence_example?: string;
 }
 
 export async function startLesson(
@@ -147,11 +157,10 @@ export async function getProgress(
 export async function analyzePhoto(
   payload: PhotoAnalyzeRequest,
 ): Promise<PhotoAnalyzeResponse> {
-  const res = await fetch(`${API_BASE_URL}/photo/analyze`, {
+  const res = await fetch(`${API_BASE_URL}/photo/identify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   return handleResponse<PhotoAnalyzeResponse>(res);
 }
-

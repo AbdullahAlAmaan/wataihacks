@@ -11,17 +11,19 @@ const lessonRoutes = require('./routes/lesson');
 const progressRoutes = require('./routes/progress');
 const speechRoutes = require('./routes/speech');
 const photoRoutes = require('./routes/photo');
+const ttsRoutes = require('./routes/tts');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // base64 audio/image can be several MB
 
 app.use('/lesson', lessonRoutes);
 app.use('/progress', progressRoutes);
 app.use('/speech', speechRoutes);
 app.use('/photo', photoRoutes);
+app.use('/tts', ttsRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ ok: true, service: 'wataihacks-api' });

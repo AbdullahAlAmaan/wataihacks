@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SentencePractice } from "@/components/SentencePractice";
-import { getNextWord, WordLessonResponse } from "@/lib/api";
+import { getNextWord, ttsUrl, WordLessonResponse } from "@/lib/api";
 
 export default function SentencePracticePage() {
     const router = useRouter();
@@ -49,7 +49,7 @@ export default function SentencePracticePage() {
                         <SentencePractice
                             sessionId={sessionId}
                             word={wordData.word}
-                            sentences={wordData.sentence_examples?.map(s => ({ text: s })) || []}
+                            sentences={wordData.sentence_examples?.map(s => ({ text: s, audioUrl: ttsUrl(s) })) || []}
                             onCompleteAll={() => router.push("/lesson/conversation")}
                         />
                     </div>

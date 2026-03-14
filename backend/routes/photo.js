@@ -1,40 +1,31 @@
 /**
- * Photo route: receive image upload, process with Gemini Vision, return label + quiz hint.
+ * Photo route: receive base64 image JSON, process with Gemini Vision, return label + quiz hint.
+ *
+ * POST /photo/identify
+ * JSON body: { image_base64, mime_type, session_id }
  */
 
 const { Router } = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 
 const router = Router();
 
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const upload = multer({
-  dest: uploadDir,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ok = /^image\/(jpeg|png|gif|webp)$/i.test(file.mimetype);
-    if (ok) cb(null, true);
-    else cb(new Error('Only images (jpeg, png, gif, webp) allowed'));
-  }
-});
-
 /**
  * POST /photo/identify
- * multipart/form-data: image file
- * Returns: { label, sentence_example, success } or error.
- * Uses Gemini Vision when GEMINI_API_KEY is set; otherwise throws error.
+ *
+ * JSON body:
+ *   - image_base64 {string}  Base64-encoded image (may include data URL prefix)
+ *   - mime_type    {string}  e.g. "image/jpeg" (default: image/jpeg)
+ *   - session_id   {string}  (optional)
+ *
+ * Returns: { label, word, sentence_example, quiz_prompt, audio_url, success }
  */
-router.post('/identify', upload.single('image'), async (req, res) => {
-  let filePath = null;
+router.post('/identify', async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No image file uploaded' });
+    const { image_base64, mime_type = 'image/jpeg' } = req.body;
+
+    if (!image_base64) {
+      return res.status(400).json({ error: 'Missing required field: image_base64' });
     }
-    filePath = req.file.path;
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey || apiKey.trim() === '') {
@@ -44,38 +35,26 @@ router.post('/identify', upload.single('image'), async (req, res) => {
       });
     }
 
-    const result = await identifyWithGemini(filePath, apiKey);
+    // Strip data URL prefix if present
+    const base64Data = image_base64.replace(/^data:[^;]+;base64,/, '');
+
+    const result = await identifyWithGemini(base64Data, mime_type, apiKey);
     return res.json(result);
   } catch (err) {
     console.error('POST /photo/identify', err);
     res.status(500).json({ error: err.message || 'Failed to identify image' });
-  } finally {
-    if (filePath && fs.existsSync(filePath)) {
-      try { fs.unlinkSync(filePath); } catch (_) {}
-    }
   }
 });
 
-function getMimeType(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  if (ext === ".png") return "image/png";
-  if (ext === ".webp") return "image/webp";
-  return "image/jpeg";
-}
-
-async function identifyWithGemini(filePath, apiKey) {
-  const { GoogleGenAI } = require("@google/genai");
+async function identifyWithGemini(base64, mimeType, apiKey) {
+  const { GoogleGenAI } = require('@google/genai');
   const ai = new GoogleGenAI({ apiKey });
 
-  const buffer = fs.readFileSync(filePath);
-  const base64 = buffer.toString("base64");
-  const mimeType = getMimeType(filePath);
-
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: 'gemini-2.5-flash',
     contents: [
       {
-        role: "user",
+        role: 'user',
         parts: [
           {
             text: `Look at this image. The user is a low-literacy English learner (caregiver context).
@@ -95,23 +74,29 @@ Reply in JSON only, no other text: { "word": "...", "sentence": "...", "descript
     ],
   });
 
-  const text = response.text || "";
+  const text = response.text || '';
 
   if (!text) {
-    throw new Error("No response from Gemini API");
+    throw new Error('No response from Gemini API');
   }
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error("Invalid response format from Gemini API: " + text);
+    throw new Error('Invalid response format from Gemini API: ' + text);
   }
 
   const parsed = JSON.parse(jsonMatch[0]);
+  const word = parsed.word || 'object';
+  const sentence = parsed.sentence || `I see ${word}.`;
+
+  const apiBase = process.env.API_BASE_URL || 'http://localhost:4000';
 
   return {
-    label: parsed.word || "object",
-    sentence_example: parsed.sentence || `I see ${parsed.word || "object"}.`,
-    description: parsed.description || null,
+    label: word,
+    word,
+    sentence_example: sentence,
+    quiz_prompt: sentence,
+    audio_url: `${apiBase}/tts/${encodeURIComponent(word)}`,
     success: true,
   };
 }

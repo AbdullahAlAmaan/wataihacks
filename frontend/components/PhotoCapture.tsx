@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { analyzePhoto } from "../lib/api";
+import { analyzePhoto, ttsUrl } from "../lib/api";
 import { AudioPlayer } from "./AudioPlayer";
 
 interface PhotoCaptureProps {
@@ -94,8 +94,8 @@ export function PhotoCapture({ sessionId }: PhotoCaptureProps) {
       });
       setLabel(res.label);
       setWord(res.word ?? null);
-      setAudioUrl(res.audio_url ?? null);
-      setQuizPrompt(res.quiz_prompt ?? null);
+      setAudioUrl(res.audio_url ?? ttsUrl(res.word ?? res.label));
+      setQuizPrompt(res.quiz_prompt ?? res.sentence_example ?? null);
       setStep("result");
     } catch (e) {
       setError(

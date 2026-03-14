@@ -227,12 +227,12 @@ Get next word for the current lesson.
 {
   "word": "bread",
   "image": "/images/bread.png",
-  "audio_url": "/audio/bread.mp3",
   "sentence_examples": [
     "I buy bread",
     "I eat bread"
   ]
 }
+// NOTE: audio is fetched via GET /tts/bread — frontend constructs this URL via ttsUrl()
 ```
 
 ### GET `/lesson/conversation?theme=grocery`
@@ -250,18 +250,48 @@ Get a scripted conversation for a theme.
 }
 ```
 
+### GET `/tts/:text`
+Stream ElevenLabs TTS audio as MP3 for any text.
+```
+GET /tts/bread          → streams audio/mpeg
+GET /tts/I%20buy%20bread → streams audio/mpeg
+```
+Frontend uses `ttsUrl(text)` from `lib/api.ts` to construct these URLs.
+
 ### POST `/speech/check`
 Validate user speech against expected text.
 ```json
-// Request
+// Request (JSON body — NOT form-data)
 {
   "expected": "I buy bread",
-  "transcript": "I buy bread"
+  "audio_base64": "<base64-encoded audio, may include data URL prefix>",
+  "session_id": "abc123"
 }
 // Response
 {
+  "transcript": "i buy bread",
   "correct": true,
-  "similarity": 1.0
+  "similarity": 0.95
+}
+```
+
+### POST `/photo/identify`
+Identify an object in a photo using Gemini Vision.
+```json
+// Request (JSON body — NOT form-data)
+{
+  "image_base64": "<base64-encoded image, may include data URL prefix>",
+  "mime_type": "image/jpeg",
+  "session_id": "abc123"
+}
+// Response
+{
+  "label": "aspirin",
+  "word": "aspirin",
+  "sentence_example": "I give aspirin for pain.",
+  "quiz_prompt": "I give aspirin for pain.",
+  "audio_url": "http://localhost:4000/tts/aspirin",
+  "success": true
 }
 ```
 

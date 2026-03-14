@@ -9,6 +9,7 @@ import {
   getNextWord,
   saveProgress,
   speechCheck,
+  ttsUrl,
 } from "../lib/api";
 
 interface WordLessonProps {
@@ -147,7 +148,7 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
           </div>
 
           <AudioPlayer
-            src={wordData.audio_url}
+            src={ttsUrl(wordData.word)}
             autoPlay
             className="mt-4"
           />

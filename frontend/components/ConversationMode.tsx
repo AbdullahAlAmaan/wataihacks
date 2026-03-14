@@ -8,6 +8,7 @@ import {
   SpeechCheckResponse,
   saveProgress,
   speechCheck,
+  ttsUrl,
 } from "../lib/api";
 
 interface ConversationModeProps {
@@ -136,20 +137,12 @@ export function ConversationMode({
         </div>
       </div>
 
-      {isWorkerTurn && current.audio_url ? (
+      {isWorkerTurn ? (
         <AudioPlayer
-          src={current.audio_url}
+          src={ttsUrl(current.line)}
           autoPlay
           onEnded={handleWorkerEnded}
         />
-      ) : isWorkerTurn ? (
-        <button
-          type="button"
-          onClick={advance}
-          className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm"
-        >
-          Next line
-        </button>
       ) : (
         <MicButton
           onRecorded={handleRecorded}

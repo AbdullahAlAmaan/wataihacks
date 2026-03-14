@@ -50,7 +50,13 @@ export default function Home() {
     <main className="max-w-5xl mx-auto p-6 pt-12 flex flex-col min-h-screen">
       <div className="text-center mb-10">
         <h1 className="text-3xl font-extrabold mb-3 text-white">VoiceFirst</h1>
-        <p className="text-slate-400 text-lg">Learn English by speaking.</p>
+        <p className="text-slate-300 text-lg font-medium mb-3">
+          English learning for Rohingya newcomers
+        </p>
+        <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">
+          No reading required. Learn English entirely through listening and speaking —
+          built for refugees and newcomers preparing for caregiver work.
+        </p>
       </div>
 
       <div className="flex-1 flex flex-col gap-10">
