@@ -2,12 +2,14 @@
 
 ## Project Overview
 
-A voice-first English learning web app for Rohingya refugees and newcomers with low literacy.
+A voice-first English learning web app for Rohingya refugees and newcomers with low literacy who are training to work as caregivers.
 The core insight: **traditional ESL apps fail because they assume users can read**. This app
 teaches English entirely through audio, voice repetition, and real-world conversation scenarios.
 
 **Hackathon mantra:** Build one clean learning loop that works flawlessly.
-`Hear → Repeat → Sentence → Conversation`
+`Hear → Repeat → Sentence → Conversation → Photo Learning → Real-World Practice`
+
+**Target Users:** Rohingya refugees and newcomers preparing for caregiver roles in healthcare, elder care, and home support services.
 
 ---
 
@@ -15,14 +17,19 @@ teaches English entirely through audio, voice repetition, and real-world convers
 
 > "Many Rohingya newcomers cannot use traditional ESL apps because they rely on reading.
 > Our system teaches English entirely through voice using real-life situations like grocery
-> stores, transportation, and workplaces."
+> stores, transportation, workplaces, and **caregiving scenarios**. Since many of our users
+> will work as caregivers, we focus on emergency situations, patient communication, and
+> daily caregiving tasks. Users can also **snap photos of real objects** — medicine bottles,
+> medical equipment, household items — and our AI identifies them, teaches the vocabulary
+> through voice, and creates personalized quizzes based on their photos."
 
 Demo flow for judges:
-1. Choose grocery theme
-2. Learn word: **bread** (audio plays, image shown)
-3. Repeat sentence: **"I buy bread"**
-4. Practice grocery store conversation
-5. Show progress tracker
+1. Choose caregiver theme
+2. Learn word: **medicine** (audio plays, image shown)
+3. Repeat sentence: **"I give medicine"**
+4. Practice caregiver conversation (emergency scenario)
+5. **Snap photo of medicine bottle → AI identifies "aspirin" → Voice teaches word → Quiz created**
+6. Show progress tracker
 
 ---
 
@@ -34,8 +41,10 @@ Demo flow for judges:
 | Backend | Node.js + Express |
 | Speech-to-Text | OpenAI Whisper API |
 | Text-to-Speech | ElevenLabs API |
+| Image Recognition | Gemini Vision API |
 | Storage | Supabase (or local JSON for MVP) |
 | Mic Input | Web Audio API / MediaRecorder |
+| Camera Input | Web Camera API / File Upload |
 
 ---
 
