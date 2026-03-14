@@ -39,7 +39,7 @@ Demo flow for judges:
 |---|---|
 | Frontend | Next.js (App Router) + Tailwind CSS |
 | Backend | Node.js + Express |
-| Speech-to-Text | OpenAI Whisper API |
+| Speech-to-Text | ElevenLabs API |
 | Text-to-Speech | ElevenLabs API |
 | Image Recognition | Gemini Vision API |
 | Storage | Supabase (or local JSON for MVP) |
@@ -96,13 +96,13 @@ Demo flow for judges:
 - ElevenLabs voices the word slowly (e.g., "Bread.")
 - Optional: image displayed
 - User taps mic, repeats word
-- Whisper transcribes, backend checks match
+- ElevenLabs transcribes, backend checks match
 
 ### Stage 2 — Sentences
 - Same word placed in 1–2 simple sentences
 - Example: "I buy bread." / "I eat bread."
 - ElevenLabs plays sentence
-- User repeats, Whisper checks
+- User repeats, ElevenLabs transcribe checks
 
 ### Stage 3 — Conversations
 - Short scripted dialogue for a real-world setting
@@ -142,13 +142,13 @@ Choose Theme (Grocery / Bus / Work / Doctor / Home)
 Stage 1: Word Lesson
   - Hear word
   - Repeat word
-  - Whisper checks transcript
+  - ElevenLabs STT checks transcript
     │
     ▼
 Stage 2: Sentence Practice
   - Hear sentence
   - Repeat sentence
-  - Whisper checks transcript
+  - ElevenLabs STT checks transcript
     │
     ▼
 Stage 3: Conversation Scenario
@@ -182,7 +182,7 @@ Express Backend API
         │
  ┌──────┴────────────────────────┐
  ▼                               ▼
-OpenAI Whisper API          ElevenLabs API
+ElevenLabs STT API          ElevenLabs TTS API
 (Speech-to-Text)            (Text-to-Speech)
  ▼                               ▲
 User mic audio              Audio stream to browser
@@ -352,7 +352,7 @@ Seed data in `backend/data/words.json`. Organized by theme.
 
 ### Must Build (ship these or demo fails)
 - [ ] Word lesson with ElevenLabs audio playback
-- [ ] Mic recording + Whisper speech check
+- [ ] Mic recording + ElevenLabs STT speech check
 - [ ] Sentence practice with feedback
 - [ ] One conversation scenario (grocery)
 - [ ] Progress tracker (words learned / goal)
@@ -376,7 +376,6 @@ Seed data in `backend/data/words.json`. Organized by theme.
 
 Create `.env` in `backend/`:
 ```
-OPENAI_API_KEY=...
 ELEVENLABS_API_KEY=...
 ELEVENLABS_VOICE_ID=...
 SUPABASE_URL=...          # optional, use local JSON if no time
@@ -396,7 +395,7 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 | Role | Owns |
 |---|---|
 | Frontend Dev | All Next.js pages, components, mic capture, audio playback |
-| Backend Dev | Express routes, Whisper integration, ElevenLabs integration |
+| Backend Dev | Express routes, ElevenLabs TTS & STT integration |
 | Data / Content | words.json seed data, conversation scripts, themes |
 | Demo Lead | Demo script, judge presentation, progress dashboard polish |
 
@@ -422,7 +421,7 @@ npm run dev            # runs on :3000
 
 ## Key Implementation Notes
 
-**Whisper speech check:** Use fuzzy string matching (not exact). A score >= 0.75 should count
+**ElevenLabs STT speech check:** Use fuzzy string matching (not exact). A score >= 0.75 should count
 as correct. The user is a non-native speaker — be forgiving.
 
 **ElevenLabs voice:** Use a calm, slow, clear voice. Slow down the `speed` parameter if the
