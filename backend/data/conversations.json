@@ -2,50 +2,159 @@
   "grocery": {
     "theme": "grocery",
     "turns": [
-      { "speaker": "worker", "line": "Hello." },
-      { "speaker": "user", "line": "Hello." },
-      { "speaker": "worker", "line": "What do you want?" },
-      { "speaker": "user", "line": "I want bread." },
-      { "speaker": "worker", "line": "Here you go." },
-      { "speaker": "user", "line": "Thank you." }
+      {
+        "speaker": "worker",
+        "line": "Hello."
+      },
+      {
+        "speaker": "user",
+        "line": "Hello."
+      },
+      {
+        "speaker": "worker",
+        "line": "What do you want?"
+      },
+      {
+        "speaker": "user",
+        "line": "I want bread."
+      },
+      {
+        "speaker": "worker",
+        "line": "Here you go."
+      },
+      {
+        "speaker": "user",
+        "line": "Thank you."
+      }
     ]
   },
   "caregiver": {
     "theme": "caregiver",
     "turns": [
-      { "speaker": "worker", "line": "Hello. How are you today?" },
-      { "speaker": "user", "line": "I am good. Thank you." },
-      { "speaker": "worker", "line": "Do you need medicine?" },
-      { "speaker": "user", "line": "Yes. I need medicine." },
-      { "speaker": "worker", "line": "Here is your medicine. Take it with water." },
-      { "speaker": "user", "line": "Thank you." }
+      {
+        "speaker": "worker",
+        "line": "Good morning. How did you sleep?"
+      },
+      {
+        "speaker": "user",
+        "line": "I slept okay, but I am cold."
+      },
+      {
+        "speaker": "worker",
+        "line": "I will get you a blanket."
+      },
+      {
+        "speaker": "user",
+        "line": "Thank you. And some water please."
+      },
+      {
+        "speaker": "worker",
+        "line": "Here is your water."
+      },
+      {
+        "speaker": "user",
+        "line": "Thank you very much."
+      }
+    ]
+  },
+  "caregiver_meds": {
+    "theme": "caregiver",
+    "turns": [
+      {
+        "speaker": "user",
+        "line": "My head hurts."
+      },
+      {
+        "speaker": "worker",
+        "line": "Do you have pain?"
+      },
+      {
+        "speaker": "user",
+        "line": "Yes, a bad headache."
+      },
+      {
+        "speaker": "worker",
+        "line": "It is time for your medicine."
+      },
+      {
+        "speaker": "user",
+        "line": "I don't want to take it."
+      },
+      {
+        "speaker": "worker",
+        "line": "The medicine will help the pain."
+      }
     ]
   },
   "caregiver_emergency": {
     "theme": "caregiver",
     "turns": [
-      { "speaker": "worker", "line": "Are you okay? Did you fall?" },
-      { "speaker": "user", "line": "I need help." },
-      { "speaker": "worker", "line": "I will call for help. Stay still." },
-      { "speaker": "user", "line": "Thank you." }
+      {
+        "speaker": "user",
+        "line": "Ah! I slipped..."
+      },
+      {
+        "speaker": "worker",
+        "line": "Did you fall? Are you hurt?"
+      },
+      {
+        "speaker": "user",
+        "line": "Yes, my leg hurts very bad. I feel dizzy."
+      },
+      {
+        "speaker": "worker",
+        "line": "Do not move. I will call for help."
+      },
+      {
+        "speaker": "user",
+        "line": "Please hurry."
+      },
+      {
+        "speaker": "worker",
+        "line": "This is an emergency. The ambulance is coming."
+      }
     ]
   },
   "doctor": {
     "theme": "doctor",
     "turns": [
-      { "speaker": "worker", "line": "Where do you have pain?" },
-      { "speaker": "user", "line": "I have pain here." },
-      { "speaker": "worker", "line": "Do you need medicine?" },
-      { "speaker": "user", "line": "Yes. I need medicine." }
+      {
+        "speaker": "worker",
+        "line": "Where do you have pain?"
+      },
+      {
+        "speaker": "user",
+        "line": "I have pain here."
+      },
+      {
+        "speaker": "worker",
+        "line": "Do you need medicine?"
+      },
+      {
+        "speaker": "user",
+        "line": "Yes. I need medicine."
+      }
     ]
   },
   "transport": {
     "theme": "transport",
     "turns": [
-      { "speaker": "worker", "line": "Where do you want to go?" },
-      { "speaker": "user", "line": "I want to go to the store." },
-      { "speaker": "worker", "line": "Here is your ticket." },
-      { "speaker": "user", "line": "Thank you." }
+      {
+        "speaker": "worker",
+        "line": "Where do you want to go?"
+      },
+      {
+        "speaker": "user",
+        "line": "I want to go to the store."
+      },
+      {
+        "speaker": "worker",
+        "line": "Here is your ticket."
+      },
+      {
+        "speaker": "user",
+        "line": "Thank you."
+      }
     ]
   }
 }

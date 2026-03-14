@@ -15,7 +15,10 @@
     "door", "key", "room", "clean", "eat", "sleep"
   ],
   "caregiver": [
-    "medicine", "help", "pain", "water", "food", "bathroom",
-    "fall", "emergency", "patient", "bed", "pillow", "comfort"
+    "medicine", "water", "food", "bathroom", "help", "pain",
+    "dizzy", "fever", "cough", "sick", "hospital", "doctor",
+    "breathe", "nausea", "heartburn", "diarrhea",
+    "fall", "emergency", "ambulance", 
+    "sleep", "tired", "comfortable", "pillow", "blanket"
   ]
 }

@@ -51,7 +51,19 @@ const SENTENCE_TEMPLATES = {
   pillow: ['I need a pillow', 'Here is your pillow'],
   comfort: ['I give comfort', 'You are safe'],
   food: ['I bring food', 'Do you want food?'],
-  bathroom: ['I need the bathroom', 'Where is the bathroom?']
+  bathroom: ['I need the bathroom', 'Where is the bathroom?'],
+  fever: ['Do you have a fever?', 'The fever is high'],
+  dizzy: ['I feel dizzy', 'Are you dizzy?'],
+  breathe: ['Breathe slowly', 'Can you breathe?'],
+  nausea: ['I feel nausea', 'Are you sick?'],
+  cough: ['I have a bad cough', 'Cover your cough'],
+  hospital: ['We go to the hospital', 'Where is the hospital?'],
+  heartburn: ['I have heartburn', 'Does your chest hurt?'],
+  diarrhea: ['I have diarrhea', 'Please drink water'],
+  ambulance: ['Call the ambulance', 'The ambulance is coming'],
+  tired: ['I am tired', 'You look tired'],
+  comfortable: ['Are you comfortable?', 'Make them comfortable'],
+  blanket: ['Here is a blanket', 'I need a blanket']
 };
 
 let wordsByTheme = null;

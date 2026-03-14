@@ -44,9 +44,9 @@ export function createSilenceDetector(
   onSilence: () => void,
   options: SilenceDetectorOptions = {},
 ): SilenceDetector {
-  const silenceDurationMs = options.silenceDurationMs ?? 2000;
-  const threshold = options.threshold ?? 0.02;
-  const sampleIntervalMs = options.sampleIntervalMs ?? 200;
+  const silenceDurationMs = options.silenceDurationMs ?? 1500;
+  const threshold = options.threshold ?? 0.05;
+  const sampleIntervalMs = options.sampleIntervalMs ?? 100;
 
   const AudioContextCtor =
     typeof window !== 'undefined' &&
@@ -54,13 +54,13 @@ export function createSilenceDetector(
     ((window as any).AudioContext || (window as any).webkitAudioContext);
   if (!AudioContextCtor) {
     // Fallback: if AudioContext is unavailable, do nothing and rely on manual stop.
-    return { stop: () => {} };
+    return { stop: () => { } };
   }
 
   const audioContext = new AudioContextCtor();
   const source = audioContext.createMediaStreamSource(stream);
   const analyser = audioContext.createAnalyser();
-  analyser.fftSize = 2048;
+  analyser.fftSize = 256;
   source.connect(analyser);
 
   const dataArray = new Uint8Array(analyser.fftSize);
@@ -92,7 +92,7 @@ export function createSilenceDetector(
       stopped = true;
       window.clearInterval(intervalId);
       source.disconnect();
-      audioContext.close().catch(() => {});
+      audioContext.close().catch(() => { });
     },
   };
 }

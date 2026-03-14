@@ -24,6 +24,7 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
   const [checking, setChecking] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     void loadWord();
@@ -34,6 +35,7 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
     setLoading(true);
     setError(null);
     setFeedback("idle");
+    setImgError(false);
     try {
       const data = await getNextWord({ theme, session_id: sessionId });
       setWordData(data);
@@ -99,15 +101,15 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
     feedback === "correct"
       ? "Correct!"
       : feedback === "incorrect"
-      ? "Try again"
-      : "";
+        ? "Try again"
+        : "";
 
   const feedbackColor =
     feedback === "correct"
       ? "bg-emerald-100 text-emerald-900"
       : feedback === "incorrect"
-      ? "bg-amber-100 text-amber-900"
-      : "";
+        ? "bg-amber-100 text-amber-900"
+        : "";
 
   return (
     <div className="flex flex-col items-center space-y-6">
@@ -127,18 +129,19 @@ export function WordLesson({ sessionId, theme }: WordLessonProps) {
       ) : wordData ? (
         <>
           <div className="flex flex-col items-center space-y-3">
-            {wordData.image ? (
+            {wordData.image && !imgError ? (
               <img
                 src={wordData.image}
                 alt={wordData.word}
                 className="h-40 w-40 rounded-2xl object-cover shadow-md"
+                onError={() => setImgError(true)}
               />
             ) : (
-              <div className="flex h-40 w-40 items-center justify-center rounded-2xl bg-gray-100 text-4xl">
+              <div className="flex h-40 w-40 items-center justify-center rounded-2xl bg-gray-900 border border-white/10 text-6xl shadow-inner">
                 🗣️
               </div>
             )}
-            <div className="rounded-full bg-gray-900 px-6 py-2 text-lg font-bold text-white tracking-wide">
+            <div className="rounded-full bg-slate-900 border border-white/5 px-8 py-3 text-2xl font-bold text-white tracking-wide shadow-xl">
               {wordData.word}
             </div>
           </div>

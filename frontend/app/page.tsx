@@ -11,6 +11,9 @@ import {
   Stethoscope,
   Play
 } from "lucide-react";
+import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
+import { GradientButton } from "@/components/ui/gradient-button";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const router = useRouter();
@@ -19,11 +22,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const themes = [
-    { id: "caregiver", name: "Caregiver", icon: HeartHandshake, color: "text-rose-400" },
-    { id: "grocery", name: "Grocery", icon: ShoppingCart, color: "text-emerald-400" },
-    { id: "work", name: "Work", icon: Briefcase, color: "text-blue-400" },
-    { id: "transport", name: "Transport", icon: Bus, color: "text-amber-400" },
-    { id: "doctor", name: "Doctor", icon: Stethoscope, color: "text-cyan-400" },
+    { id: "caregiver", name: "Caregiver", description: "Medical observing, patient care, daily interactions.", icon: <HeartHandshake size={32} />, color: "text-rose-400" },
+    { id: "grocery", name: "Grocery", description: "Shopping, asking for items, basic food vocab.", icon: <ShoppingCart size={32} />, color: "text-emerald-400" },
+    { id: "work", name: "Work", description: "Colleagues, managers, tasks and schedules.", icon: <Briefcase size={32} />, color: "text-blue-400" },
+    { id: "transport", name: "Transport", description: "Bus, train, directions, and tickets.", icon: <Bus size={32} />, color: "text-amber-400" },
+    { id: "doctor", name: "Doctor", description: "Doctor visits, prescriptions, and health.", icon: <Stethoscope size={32} />, color: "text-cyan-400" },
   ];
 
   const handleStart = async () => {
@@ -44,15 +47,15 @@ export default function Home() {
   };
 
   return (
-    <main className="max-w-md mx-auto p-6 pt-12 flex flex-col min-h-screen">
+    <main className="max-w-5xl mx-auto p-6 pt-12 flex flex-col min-h-screen">
       <div className="text-center mb-10">
         <h1 className="text-3xl font-extrabold mb-3 text-white">VoiceFirst</h1>
         <p className="text-slate-400 text-lg">Learn English by speaking.</p>
       </div>
 
-      <div className="flex-1 flex flex-col gap-8">
+      <div className="flex-1 flex flex-col gap-10">
         {/* Goal Selection */}
-        <section>
+        <section className="max-w-md mx-auto w-full">
           <h2 className="text-xl font-bold mb-4 text-white">Daily Goal</h2>
           <div className="card flex items-center justify-between p-4">
             <span className="text-lg font-medium text-slate-300">Words to learn</span>
@@ -73,35 +76,28 @@ export default function Home() {
         {/* Theme Selection */}
         <section>
           <h2 className="text-xl font-bold mb-4 text-white">Choose a Topic</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {themes.map((theme) => {
-              const Icon = theme.icon;
-              const isSelected = selectedTheme === theme.id;
-              return (
-                <button
-                  key={theme.id}
-                  onClick={() => setSelectedTheme(theme.id)}
-                  className={`theme-tile ${isSelected ? 'selected' : ''}`}
-                >
-                  <Icon size={40} className={theme.color} />
-                  <span className="font-semibold text-lg text-slate-200">{theme.name}</span>
-                </button>
-              );
-            })}
+          <div className="-mx-6">
+            <FeaturesSectionWithHoverEffects
+              items={themes}
+              selectedId={selectedTheme}
+              onSelect={setSelectedTheme}
+            />
           </div>
         </section>
       </div>
 
       {/* Sticky Bottom Action */}
-      <div className="sticky bottom-6 mt-8">
-        <button
+      <div className="sticky bottom-6 mt-8 max-w-md mx-auto w-full">
+        <GradientButton
+          variant="variant"
           onClick={handleStart}
           disabled={!selectedTheme || loading}
-          className={`w-full btn-primary py-6 text-2xl ${!selectedTheme || loading ? 'opacity-50 cursor-not-allowed bg-slate-700' : ''}`}
+          className={`w-full py-6 text-2xl shadow-xl hover:shadow-2xl transition-all ${!selectedTheme || loading ? "opacity-50 cursor-not-allowed saturate-0" : ""
+            }`}
         >
-          <Play fill="currentColor" size={28} />
+          <Play fill="currentColor" size={28} className="mr-3" />
           {loading ? "Starting..." : "Start Learning"}
-        </button>
+        </GradientButton>
       </div>
     </main>
   );
