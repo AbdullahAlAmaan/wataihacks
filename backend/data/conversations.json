@@ -1,0 +1,51 @@
+{
+  "grocery": {
+    "theme": "grocery",
+    "turns": [
+      { "speaker": "worker", "line": "Hello." },
+      { "speaker": "user", "line": "Hello." },
+      { "speaker": "worker", "line": "What do you want?" },
+      { "speaker": "user", "line": "I want bread." },
+      { "speaker": "worker", "line": "Here you go." },
+      { "speaker": "user", "line": "Thank you." }
+    ]
+  },
+  "caregiver": {
+    "theme": "caregiver",
+    "turns": [
+      { "speaker": "worker", "line": "Hello. How are you today?" },
+      { "speaker": "user", "line": "I am good. Thank you." },
+      { "speaker": "worker", "line": "Do you need medicine?" },
+      { "speaker": "user", "line": "Yes. I need medicine." },
+      { "speaker": "worker", "line": "Here is your medicine. Take it with water." },
+      { "speaker": "user", "line": "Thank you." }
+    ]
+  },
+  "caregiver_emergency": {
+    "theme": "caregiver",
+    "turns": [
+      { "speaker": "worker", "line": "Are you okay? Did you fall?" },
+      { "speaker": "user", "line": "I need help." },
+      { "speaker": "worker", "line": "I will call for help. Stay still." },
+      { "speaker": "user", "line": "Thank you." }
+    ]
+  },
+  "doctor": {
+    "theme": "doctor",
+    "turns": [
+      { "speaker": "worker", "line": "Where do you have pain?" },
+      { "speaker": "user", "line": "I have pain here." },
+      { "speaker": "worker", "line": "Do you need medicine?" },
+      { "speaker": "user", "line": "Yes. I need medicine." }
+    ]
+  },
+  "transport": {
+    "theme": "transport",
+    "turns": [
+      { "speaker": "worker", "line": "Where do you want to go?" },
+      { "speaker": "user", "line": "I want to go to the store." },
+      { "speaker": "worker", "line": "Here is your ticket." },
+      { "speaker": "user", "line": "Thank you." }
+    ]
+  }
+}

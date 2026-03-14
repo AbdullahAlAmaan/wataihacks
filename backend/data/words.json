@@ -1,0 +1,21 @@
+{
+  "grocery": [
+    "bread", "milk", "bag", "pay", "price", "water", "egg", "rice"
+  ],
+  "transport": [
+    "bus", "stop", "ticket", "where", "go", "help"
+  ],
+  "work": [
+    "job", "start", "time", "break", "done", "manager"
+  ],
+  "doctor": [
+    "pain", "help", "medicine", "sick", "need", "today"
+  ],
+  "home": [
+    "door", "key", "room", "clean", "eat", "sleep"
+  ],
+  "caregiver": [
+    "medicine", "help", "pain", "water", "food", "bathroom",
+    "fall", "emergency", "patient", "bed", "pillow", "comfort"
+  ]
+}
